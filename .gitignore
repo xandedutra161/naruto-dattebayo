@@ -1,0 +1,53 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Kotlin
+.kotlin/
+
+# Local configuration
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Signing files
+*.jks
+*.keystore
+
+# NDK
+.externalNativeBuild/
+.cxx/
+
+# Android Studio captures
+captures/
+
+# Generated
+bin/
+gen/
+out/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.swp
+*~
+
+# Firebase / crash reports (às vezes aparecem)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
