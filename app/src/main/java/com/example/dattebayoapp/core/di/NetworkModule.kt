@@ -1,4 +1,4 @@
-package com.example.dattebayoapp.data.remote.di
+package com.example.dattebayoapp.core.di
 
 import com.example.dattebayoapp.core.network.RetrofitClient
 import com.example.dattebayoapp.data.remote.service.NarutoApiService
