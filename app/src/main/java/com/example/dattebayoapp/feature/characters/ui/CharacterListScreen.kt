@@ -38,9 +38,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.example.dattebayoapp.R
 import com.example.dattebayoapp.domain.model.CharacterDebut
 import com.example.dattebayoapp.domain.model.CharacterListItem
 import com.example.dattebayoapp.ui.theme.DattebayoAppTheme
@@ -62,9 +64,9 @@ fun CharacterListScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(text = "Naruto Characters")
+                        Text(text = stringResource(R.string.characters_title))
                         Text(
-                            text = "${characters.size} loaded",
+                            text = stringResource(R.string.characters_loaded, characters.size),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -81,9 +83,9 @@ fun CharacterListScreen(
             )
 
             errorMessage != null -> CharacterFeedbackState(
-                title = "Could not load characters",
+                title = stringResource(R.string.characters_error_title),
                 message = errorMessage,
-                actionLabel = "Try again",
+                actionLabel = stringResource(R.string.retry),
                 onAction = onRetry,
                 modifier = Modifier
                     .fillMaxSize()
@@ -91,9 +93,9 @@ fun CharacterListScreen(
             )
 
             characters.isEmpty() -> CharacterFeedbackState(
-                title = "No characters yet",
-                message = "When the list is available, the shinobi roster will appear here.",
-                actionLabel = "Refresh",
+                title = stringResource(R.string.characters_empty_title),
+                message = stringResource(R.string.characters_empty_message),
+                actionLabel = stringResource(R.string.refresh),
                 onAction = onRetry,
                 modifier = Modifier
                     .fillMaxSize()
@@ -142,18 +144,18 @@ private fun CharacterListHeader(characterCount: Int) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
-                text = "Hidden Leaf Archive",
+                text = stringResource(R.string.hidden_leaf_archive),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             Text(
-                text = "Browse the shinobi roster and open each profile for combat data, debut facts and clan history.",
+                text = stringResource(R.string.hidden_leaf_archive_description),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             AssistChip(
                 onClick = {},
-                label = { Text("$characterCount characters") },
+                label = { Text(stringResource(R.string.characters_count, characterCount)) },
                 colors = AssistChipDefaults.assistChipColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ),
@@ -207,7 +209,7 @@ private fun CharacterListCard(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            text = "ID #${character.id}",
+                            text = stringResource(R.string.character_id, character.id),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -218,7 +220,11 @@ private fun CharacterListCard(
                         onClick = onFavoriteClick,
                         label = {
                             Text(
-                                text = if (character.isFavorite) "Favorited" else "Favorite",
+                                text = if (character.isFavorite) {
+                                    stringResource(R.string.favorite_selected)
+                                } else {
+                                    stringResource(R.string.favorite_action)
+                                },
                             )
                         },
                         colors = FilterChipDefaults.filterChipColors(),
@@ -308,7 +314,7 @@ internal fun CharacterFeedbackState(
 }
 
 @Composable
-private fun CharacterImage(
+internal fun CharacterImage(
     imageUrl: String?,
     contentDescription: String,
     modifier: Modifier = Modifier,
@@ -338,13 +344,13 @@ private fun CharacterImage(
 }
 
 internal fun CharacterDebut?.toDebutLabel(): String {
-    if (this == null) return "No debut information available."
+    if (this == null) return ""
 
     return listOfNotNull(
-        manga?.let { "Manga: $it" },
+        manga?.let { "Mangá: $it" },
         anime?.let { "Anime: $it" },
     ).ifEmpty {
-        listOf("No debut information available.")
+        emptyList()
     }.joinToString(separator = "\n")
 }
 

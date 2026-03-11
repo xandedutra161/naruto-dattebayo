@@ -59,7 +59,7 @@ class FavoriteCharactersScreenTest {
             }
         }
 
-        composeRule.onNodeWithText("Search favorites").performTextInput("Sasuke")
+        composeRule.onNodeWithText("Buscar favoritos").performTextInput("Sasuke")
 
         composeRule.onNodeWithText("Sasuke Uchiha").assertIsDisplayed()
         composeRule.onAllNodesWithText("Naruto Uzumaki").assertCountEquals(0)
@@ -97,9 +97,9 @@ class FavoriteCharactersScreenTest {
             }
         }
 
-        composeRule.onNodeWithText("Search favorites").performTextInput("Kakashi")
+        composeRule.onNodeWithText("Buscar favoritos").performTextInput("Kakashi")
 
-        composeRule.onNodeWithText("No favorite matches").assertIsDisplayed()
-        composeRule.onNodeWithText("Try a different search term.").assertIsDisplayed()
+        composeRule.onNodeWithText("Nenhum favorito encontrado").assertIsDisplayed()
+        composeRule.onNodeWithText("Tente outro termo de busca.").assertIsDisplayed()
     }
 }

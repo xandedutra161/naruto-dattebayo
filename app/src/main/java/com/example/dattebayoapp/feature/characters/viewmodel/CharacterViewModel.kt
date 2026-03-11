@@ -49,7 +49,7 @@ class CharacterViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             isLoading = false,
-                            errorMessage = throwable.message ?: "Unable to load characters.",
+                            errorMessage = "Não foi possível carregar os personagens.",
                         )
                     }
                 }
@@ -88,7 +88,7 @@ class CharacterViewModel @Inject constructor(
                 .onFailure { throwable ->
                     _uiState.update { state ->
                         state.copy(
-                            errorMessage = throwable.message ?: "Unable to update favorite state.",
+                            errorMessage = "Não foi possível atualizar o favorito.",
                         )
                     }
                 }

@@ -46,7 +46,7 @@ class FavoriteCharactersViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             isLoading = false,
-                            errorMessage = throwable.message ?: "Unable to load favorites.",
+                            errorMessage = "Não foi possível carregar os favoritos.",
                         )
                     }
                 }
@@ -71,7 +71,7 @@ class FavoriteCharactersViewModel @Inject constructor(
                 .onFailure { throwable ->
                     _uiState.update { state ->
                         state.copy(
-                            errorMessage = throwable.message ?: "Unable to remove favorite.",
+                            errorMessage = "Não foi possível remover o favorito.",
                         )
                     }
                 }

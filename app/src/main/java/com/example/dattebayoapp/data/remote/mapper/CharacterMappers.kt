@@ -40,16 +40,16 @@ fun CharacterDetailsDto.toDomain(): CharacterDetails {
     return CharacterDetails(
         id = id,
         name = name,
-        images = images,
+        images = images.orEmpty(),
         debut = debut?.toDomain() ?: CharacterDebut(),
         isFavorite = false,
         family = family.orEmpty(),
-        jutsu = jutsu,
-        natureType = natureType,
+        jutsu = jutsu.orEmpty(),
+        natureType = natureType.orEmpty(),
         personal = personal?.toDomain() ?: CharacterPersonal(),
         rank = rank?.toDomain() ?: CharacterRank(),
-        tools = tools,
-        uniqueTraits = uniqueTraits,
+        tools = tools.orEmpty(),
+        uniqueTraits = uniqueTraits.orEmpty(),
         voiceActors = voiceActors?.toDomain() ?: CharacterVoiceActors(),
     )
 }

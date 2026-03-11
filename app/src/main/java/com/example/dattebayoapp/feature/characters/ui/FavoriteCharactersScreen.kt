@@ -4,9 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -17,8 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.dattebayoapp.R
 import com.example.dattebayoapp.domain.model.CharacterDebut
 import com.example.dattebayoapp.domain.model.CharacterListItem
 import com.example.dattebayoapp.feature.characters.state.FavoriteCharactersUiState
@@ -40,9 +44,9 @@ fun FavoriteCharactersScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(text = "Favorites")
+                        Text(text = stringResource(R.string.favorites_title))
                         Text(
-                            text = "${uiState.favorites.size} saved",
+                            text = stringResource(R.string.favorites_saved, uiState.favorites.size),
                             style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
                             color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -59,9 +63,9 @@ fun FavoriteCharactersScreen(
             )
 
             uiState.errorMessage != null -> CharacterFeedbackState(
-                title = "Could not load favorites",
+                title = stringResource(R.string.favorites_error_title),
                 message = uiState.errorMessage,
-                actionLabel = "Try again",
+                actionLabel = stringResource(R.string.retry),
                 onAction = onRetry,
                 modifier = Modifier
                     .fillMaxSize()
@@ -79,7 +83,7 @@ fun FavoriteCharactersScreen(
                     OutlinedTextField(
                         value = uiState.searchQuery,
                         onValueChange = onSearchQueryChange,
-                        label = { Text("Search favorites") },
+                        label = { Text(stringResource(R.string.search_favorites_label)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -88,13 +92,13 @@ fun FavoriteCharactersScreen(
                 if (uiState.filteredFavorites.isEmpty()) {
                     item {
                         CharacterFeedbackState(
-                            title = "No favorite matches",
+                            title = stringResource(R.string.favorites_empty_title),
                             message = if (uiState.searchQuery.isBlank()) {
-                                "Favorite characters will appear here."
+                                stringResource(R.string.favorites_empty_message)
                             } else {
-                                "Try a different search term."
+                                stringResource(R.string.favorites_search_empty_message)
                             },
-                            actionLabel = "Refresh",
+                            actionLabel = stringResource(R.string.refresh),
                             onAction = onRetry,
                         )
                     }
@@ -126,25 +130,36 @@ private fun FavoriteCharacterCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
     ) {
-        Column(
+        Row(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(
-                text = character.name,
-                style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+            CharacterImage(
+                imageUrl = character.images.firstOrNull(),
+                contentDescription = character.name,
+                modifier = Modifier.size(width = 92.dp, height = 112.dp),
             )
 
-            character.debut?.appearsIn?.let { CharacterInfoPill(label = it) }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = character.name,
+                    style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                )
 
-            Text(
-                text = character.debut.toDebutLabel(),
-                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+                character.debut?.appearsIn?.let { CharacterInfoPill(label = it) }
 
-            Button(onClick = onRemoveFavoriteClick) {
-                Text("Remove favorite")
+                Text(
+                    text = character.debut.toDebutLabel(),
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Button(onClick = onRemoveFavoriteClick) {
+                    Text(stringResource(R.string.remove_favorite_action))
+                }
             }
         }
     }

@@ -31,10 +31,10 @@ class DattebayoBottomBarTest {
             }
         }
 
-        composeRule.onNodeWithText("Characters").assertExists().assertIsSelected()
-        composeRule.onNodeWithText("Favorites").assertExists()
-        composeRule.onNodeWithContentDescription("Characters").assertExists()
-        composeRule.onNodeWithContentDescription("Favorites").assertExists()
+        composeRule.onNodeWithText("Personagens").assertExists().assertIsSelected()
+        composeRule.onNodeWithText("Favoritos").assertExists()
+        composeRule.onNodeWithContentDescription("Personagens").assertExists()
+        composeRule.onNodeWithContentDescription("Favoritos").assertExists()
     }
 
     @Test
@@ -56,7 +56,7 @@ class DattebayoBottomBarTest {
             }
         }
 
-        composeRule.onNodeWithText("Favorites").performClick()
+        composeRule.onNodeWithText("Favoritos").performClick()
 
         assertEquals(AppDestination.Favorites.route, selectedRoute)
     }

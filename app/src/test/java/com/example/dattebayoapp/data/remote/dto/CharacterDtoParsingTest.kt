@@ -37,7 +37,7 @@ class CharacterDtoParsingTest {
 
         assertEquals(1344, response.id)
         assertEquals("Naruto Uzumaki", response.name)
-        assertEquals(2, response.images.size)
+        assertEquals(2, response.images?.size)
         assertEquals("Minato Namikaze", response.family?.get("father"))
         assertEquals("12–13", response.personal?.age?.get("Part I"))
         assertEquals("Genin", response.rank?.ninjaRank?.get("Part I"))
@@ -45,6 +45,7 @@ class CharacterDtoParsingTest {
         assertEquals(5, response.voiceActors?.english?.asJsonArray?.size())
         assertTrue(response.personal?.classification?.isJsonArray == true)
         assertTrue(response.personal?.team?.isJsonArray == true)
+        assertTrue(response.uniqueTraits.isNullOrEmpty())
     }
 
     @Test

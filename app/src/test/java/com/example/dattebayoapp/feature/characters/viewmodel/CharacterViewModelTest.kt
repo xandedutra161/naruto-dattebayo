@@ -1,7 +1,6 @@
 package com.example.dattebayoapp.feature.characters.viewmodel
 
 import com.example.dattebayoapp.domain.model.CharacterDebut
-import com.example.dattebayoapp.domain.model.CharacterDetails
 import com.example.dattebayoapp.domain.model.CharacterListItem
 import com.example.dattebayoapp.domain.model.CharacterPage
 import com.example.dattebayoapp.domain.repository.CharacterRepository
@@ -70,7 +69,7 @@ class CharacterViewModelTest {
 
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
-        assertEquals("Network unavailable", state.errorMessage)
+        assertEquals("Não foi possível carregar os personagens.", state.errorMessage)
         assertTrue(state.characters.isEmpty())
     }
 

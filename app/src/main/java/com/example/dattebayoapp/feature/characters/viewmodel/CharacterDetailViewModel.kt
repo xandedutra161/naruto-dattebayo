@@ -46,7 +46,7 @@ class CharacterDetailViewModel @Inject constructor(
                     _uiState.update { state ->
                         state.copy(
                             isLoading = false,
-                            errorMessage = throwable.message ?: "Unable to load character details.",
+                            errorMessage = "Não foi possível carregar os detalhes do personagem.",
                         )
                     }
                 }
@@ -67,7 +67,7 @@ class CharacterDetailViewModel @Inject constructor(
                 .onFailure { throwable ->
                     _uiState.update { state ->
                         state.copy(
-                            errorMessage = throwable.message ?: "Unable to update favorite state.",
+                            errorMessage = "Não foi possível atualizar o favorito.",
                         )
                     }
                 }

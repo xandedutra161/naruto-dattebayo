@@ -13,8 +13,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.padding
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
@@ -23,6 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.dattebayoapp.R
 import com.example.dattebayoapp.feature.characters.ui.CharacterDetailScreen
 import com.example.dattebayoapp.feature.characters.ui.CharacterListScreen
 import com.example.dattebayoapp.feature.characters.ui.FavoriteCharactersScreen
@@ -143,16 +145,17 @@ fun DattebayoBottomBar(
 ) {
     NavigationBar(modifier = modifier) {
         destinations.forEach { destination ->
+            val labelResId = destination.labelResId
             NavigationBarItem(
                 selected = currentRoute == destination.route,
                 onClick = { onNavigate(destination) },
                 icon = {
                     Icon(
                         imageVector = destination.icon,
-                        contentDescription = destination.label,
+                        contentDescription = stringResource(labelResId),
                     )
                 },
-                label = { Text(destination.label) },
+                label = { Text(stringResource(labelResId)) },
             )
         }
     }
@@ -165,9 +168,9 @@ private val AppDestination.icon: ImageVector
         AppDestination.CharacterDetail -> Icons.Outlined.Groups
     }
 
-private val AppDestination.label: String
+private val AppDestination.labelResId: Int
     get() = when (this) {
-        AppDestination.Characters -> "Characters"
-        AppDestination.Favorites -> "Favorites"
-        AppDestination.CharacterDetail -> "Detail"
+        AppDestination.Characters -> R.string.nav_characters
+        AppDestination.Favorites -> R.string.nav_favorites
+        AppDestination.CharacterDetail -> R.string.detail_default_title
     }
