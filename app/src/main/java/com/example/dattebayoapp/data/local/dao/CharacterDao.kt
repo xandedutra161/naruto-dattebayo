@@ -13,6 +13,9 @@ interface CharacterDao {
     @Query("SELECT * FROM characters WHERE id = :id")
     suspend fun getCharacterById(id: Int): CharacterEntity?
 
+    @Query("SELECT * FROM characters WHERE isFavorite = 1 ORDER BY name ASC")
+    suspend fun getFavoriteCharacters(): List<CharacterEntity>
+
     @Query("SELECT id FROM characters WHERE isFavorite = 1")
     suspend fun getFavoriteCharacterIds(): List<Int>
 

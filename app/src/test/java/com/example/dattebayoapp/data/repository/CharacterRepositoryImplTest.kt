@@ -11,6 +11,7 @@ import com.example.dattebayoapp.data.remote.dto.CharactersResponseDto
 import com.example.dattebayoapp.data.remote.service.NarutoApiService
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CharacterRepositoryImplTest {
@@ -72,17 +73,72 @@ class CharacterRepositoryImplTest {
     }
 
     @Test
-    fun `toggleFavorite caches remote detail when character is not local yet`() = runTest {
+    fun `saveFavorite caches remote detail when character is not local yet`() = runTest {
         val characterDao = FakeCharacterDao()
         val repository = CharacterRepositoryImpl(
             narutoApiService = FakeNarutoApiService(),
             characterDao = characterDao,
         )
 
-        val result = repository.toggleFavorite(1344)
+        val result = repository.saveFavorite(1344)
 
         assertEquals(true, result)
         assertEquals(true, characterDao.getCharacterById(1344)?.isFavorite)
+    }
+
+    @Test
+    fun `removeFavorite updates cached character state`() = runTest {
+        val characterDao = FakeCharacterDao(
+            initialCharacters = mutableMapOf(
+                1344 to CharacterEntity(
+                    id = 1344,
+                    name = "Naruto Uzumaki",
+                    isFavorite = true,
+                ),
+            ),
+        )
+        val repository = CharacterRepositoryImpl(
+            narutoApiService = FakeNarutoApiService(),
+            characterDao = characterDao,
+        )
+
+        val result = repository.removeFavorite(1344)
+
+        assertTrue(result)
+        assertEquals(false, characterDao.getCharacterById(1344)?.isFavorite)
+    }
+
+    @Test
+    fun `getFavoriteCharacters returns mapped favorite items`() = runTest {
+        val characterDao = FakeCharacterDao(
+            initialCharacters = mutableMapOf(
+                1344 to CharacterEntity(
+                    id = 1344,
+                    name = "Naruto Uzumaki",
+                    images = listOf("image-1"),
+                    debut = CharacterDebutDto(manga = "Naruto Chapter #1").let {
+                        com.example.dattebayoapp.domain.model.CharacterDebut(manga = it.manga)
+                    },
+                    isFavorite = true,
+                ),
+                1307 to CharacterEntity(
+                    id = 1307,
+                    name = "Sasuke Uchiha",
+                    isFavorite = false,
+                ),
+            ),
+        )
+        val repository = CharacterRepositoryImpl(
+            narutoApiService = FakeNarutoApiService(),
+            characterDao = characterDao,
+        )
+
+        val result = repository.getFavoriteCharacters()
+
+        assertEquals(1, result.size)
+        assertEquals(1344, result.first().id)
+        assertEquals(true, result.first().isFavorite)
+        assertEquals("Naruto Chapter #1", result.first().debut?.manga)
     }
 
     private class FakeNarutoApiService : NarutoApiService {
@@ -130,6 +186,10 @@ class CharacterRepositoryImplTest {
 
         override suspend fun getCharacterById(id: Int): CharacterEntity? {
             return characters[id]
+        }
+
+        override suspend fun getFavoriteCharacters(): List<CharacterEntity> {
+            return characters.values.filter { it.isFavorite }.sortedBy { it.name }
         }
 
         override suspend fun getFavoriteCharacterIds(): List<Int> {

@@ -1,10 +1,12 @@
 package com.example.dattebayoapp.data.repository
 
 import com.example.dattebayoapp.data.local.dao.CharacterDao
+import com.example.dattebayoapp.data.local.mapper.toListItem
 import com.example.dattebayoapp.data.local.mapper.toEntity
 import com.example.dattebayoapp.data.remote.mapper.toDomain
 import com.example.dattebayoapp.data.remote.service.NarutoApiService
 import com.example.dattebayoapp.domain.model.CharacterDetails
+import com.example.dattebayoapp.domain.model.CharacterListItem
 import com.example.dattebayoapp.domain.model.CharacterPage
 import com.example.dattebayoapp.domain.repository.CharacterRepository
 import javax.inject.Inject
@@ -40,17 +42,41 @@ class CharacterRepositoryImpl @Inject constructor(
         return details
     }
 
-    override suspend fun toggleFavorite(id: Int): Boolean {
+    override suspend fun getFavoriteCharacters(): List<CharacterListItem> {
+        return characterDao.getFavoriteCharacters().map { entity -> entity.toListItem() }
+    }
+
+    override suspend fun saveFavorite(id: Int): Boolean {
         val existingCharacter = characterDao.getCharacterById(id)
 
         if (existingCharacter != null) {
-            val newFavoriteState = !existingCharacter.isFavorite
-            characterDao.updateFavorite(id, newFavoriteState)
-            return newFavoriteState
+            characterDao.updateFavorite(id, true)
+            return true
         }
 
         val details = narutoApiService.getCharacterDetails(id).toDomain().copy(isFavorite = true)
         characterDao.upsertCharacter(details.toEntity())
         return true
+    }
+
+    override suspend fun removeFavorite(id: Int): Boolean {
+        val existingCharacter = characterDao.getCharacterById(id) ?: return false
+        characterDao.updateFavorite(id, false)
+        return existingCharacter.isFavorite
+    }
+
+    override suspend fun toggleFavorite(id: Int): Boolean {
+        val existingCharacter = characterDao.getCharacterById(id)
+
+        if (existingCharacter != null) {
+            return if (existingCharacter.isFavorite) {
+                removeFavorite(id)
+                false
+            } else {
+                saveFavorite(id)
+            }
+        }
+
+        return saveFavorite(id)
     }
 }

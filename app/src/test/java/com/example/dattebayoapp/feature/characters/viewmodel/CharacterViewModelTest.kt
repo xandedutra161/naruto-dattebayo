@@ -1,6 +1,7 @@
 package com.example.dattebayoapp.feature.characters.viewmodel
 
 import com.example.dattebayoapp.domain.model.CharacterDebut
+import com.example.dattebayoapp.domain.model.CharacterDetails
 import com.example.dattebayoapp.domain.model.CharacterListItem
 import com.example.dattebayoapp.domain.model.CharacterPage
 import com.example.dattebayoapp.domain.repository.CharacterRepository
@@ -135,6 +136,23 @@ class CharacterViewModelTest {
         }
 
         override suspend fun getCharacterDetails(id: Int) = throw UnsupportedOperationException()
+
+        override suspend fun getFavoriteCharacters(): List<CharacterListItem> {
+            return characters
+                .filter { character -> favorites[character.id] == true }
+                .map { character -> character.copy(isFavorite = true) }
+        }
+
+        override suspend fun saveFavorite(id: Int): Boolean {
+            favorites[id] = true
+            return true
+        }
+
+        override suspend fun removeFavorite(id: Int): Boolean {
+            val wasFavorite = favorites[id] == true
+            favorites[id] = false
+            return wasFavorite
+        }
 
         override suspend fun toggleFavorite(id: Int): Boolean {
             val newState = !(favorites[id] ?: false)
