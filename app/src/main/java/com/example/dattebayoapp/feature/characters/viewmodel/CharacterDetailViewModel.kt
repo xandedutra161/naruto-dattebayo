@@ -7,12 +7,12 @@ import com.example.dattebayoapp.domain.usecase.GetCharacterDetailUseCase
 import com.example.dattebayoapp.domain.usecase.ToggleFavoriteUseCase
 import com.example.dattebayoapp.feature.characters.state.CharacterDetailUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class CharacterDetailViewModel @Inject constructor(

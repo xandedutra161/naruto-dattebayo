@@ -1,8 +1,8 @@
 package com.example.dattebayoapp.data.repository
 
 import com.example.dattebayoapp.data.local.dao.CharacterDao
-import com.example.dattebayoapp.data.local.mapper.toListItem
 import com.example.dattebayoapp.data.local.mapper.toEntity
+import com.example.dattebayoapp.data.local.mapper.toListItem
 import com.example.dattebayoapp.data.remote.mapper.toDomain
 import com.example.dattebayoapp.data.remote.service.NarutoApiService
 import com.example.dattebayoapp.domain.model.CharacterDetails
