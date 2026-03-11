@@ -7,7 +7,7 @@ Aplicativo Android nativo para explorar personagens do universo Naruto e gerenci
 - Kotlin como linguagem principal do projeto.
 - Jetpack Compose e Material 3 para a interface declarativa.
 - Navigation Compose para fluxo entre lista, detalhe e favoritos.
-- Hilt para injecao de dependencia.
+- Koin para injecao de dependencia.
 - Retrofit + Gson para consumo e serializacao da API.
 - Room para armazenamento local dos favoritos.
 - Coroutines + StateFlow para asincronismo e gerenciamento de estado.
@@ -23,7 +23,7 @@ Aplicativo Android nativo para explorar personagens do universo Naruto e gerenci
 
 ## Decisoes arquiteturais
 
-- Hilt organizado em modulos dedicados para rede, banco e repositorios.
+- Koin organizado em modulos dedicados para rede, banco, repositorios, use cases e viewmodels.
 - Repository como ponto unico de integracao entre API remota e cache local.
 - Navegacao declarativa com Compose, incluindo rota parametrizada para detalhes.
 - Tratamento explicito de retry e mensagens de erro nos fluxos principais da UI.

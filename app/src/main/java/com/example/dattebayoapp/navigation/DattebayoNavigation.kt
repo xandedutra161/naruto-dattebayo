@@ -14,7 +14,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
@@ -30,6 +29,8 @@ import com.example.dattebayoapp.feature.characters.ui.FavoriteCharactersScreen
 import com.example.dattebayoapp.feature.characters.viewmodel.CharacterDetailViewModel
 import com.example.dattebayoapp.feature.characters.viewmodel.CharacterViewModel
 import com.example.dattebayoapp.feature.characters.viewmodel.FavoriteCharactersViewModel
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinNavViewModel
 
 @Composable
 fun DattebayoNavigation(
@@ -72,7 +73,7 @@ fun DattebayoNavigation(
             modifier = Modifier,
         ) {
             composable(AppDestination.Characters.route) {
-                val viewModel: CharacterViewModel = hiltViewModel()
+                val viewModel: CharacterViewModel = koinViewModel()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
                 CharacterListScreen(
@@ -89,7 +90,7 @@ fun DattebayoNavigation(
             }
 
             composable(AppDestination.Favorites.route) {
-                val viewModel: FavoriteCharactersViewModel = hiltViewModel()
+                val viewModel: FavoriteCharactersViewModel = koinViewModel()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
                 FavoriteCharactersScreen(
@@ -110,7 +111,7 @@ fun DattebayoNavigation(
                     navArgument("characterId") { type = NavType.IntType },
                 ),
             ) {
-                val viewModel: CharacterDetailViewModel = hiltViewModel()
+                val viewModel: CharacterDetailViewModel = koinNavViewModel()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
                 CharacterDetailScreen(

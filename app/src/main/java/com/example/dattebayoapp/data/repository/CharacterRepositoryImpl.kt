@@ -9,11 +9,10 @@ import com.example.dattebayoapp.domain.model.CharacterDetails
 import com.example.dattebayoapp.domain.model.CharacterListItem
 import com.example.dattebayoapp.domain.model.CharacterPage
 import com.example.dattebayoapp.domain.repository.CharacterRepository
-import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class CharacterRepositoryImpl @Inject constructor(
+class CharacterRepositoryImpl(
     private val narutoApiService: NarutoApiService,
     private val characterDao: CharacterDao,
 ) : CharacterRepository {

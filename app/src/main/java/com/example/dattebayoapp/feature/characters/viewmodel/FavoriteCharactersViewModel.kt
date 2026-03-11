@@ -5,17 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.dattebayoapp.domain.usecase.ObserveFavoriteCharactersUseCase
 import com.example.dattebayoapp.domain.usecase.RemoveFavoriteUseCase
 import com.example.dattebayoapp.feature.characters.state.FavoriteCharactersUiState
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class FavoriteCharactersViewModel @Inject constructor(
+class FavoriteCharactersViewModel(
     private val observeFavoriteCharactersUseCase: ObserveFavoriteCharactersUseCase,
     private val removeFavoriteUseCase: RemoveFavoriteUseCase,
 ) : ViewModel() {
