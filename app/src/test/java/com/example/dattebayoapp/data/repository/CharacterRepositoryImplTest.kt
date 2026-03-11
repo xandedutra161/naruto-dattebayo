@@ -2,29 +2,58 @@ package com.example.dattebayoapp.data.repository
 
 import com.example.dattebayoapp.data.local.dao.CharacterDao
 import com.example.dattebayoapp.data.local.entity.CharacterEntity
-import com.example.dattebayoapp.data.remote.dto.CharacterDebutDto
-import com.example.dattebayoapp.data.remote.dto.CharacterDetailsDto
-import com.example.dattebayoapp.data.remote.dto.CharacterPersonalDto
-import com.example.dattebayoapp.data.remote.dto.CharacterRankDto
-import com.example.dattebayoapp.data.remote.dto.CharacterSummaryDto
-import com.example.dattebayoapp.data.remote.dto.CharactersResponseDto
 import com.example.dattebayoapp.data.remote.service.NarutoApiService
+import com.example.dattebayoapp.domain.model.CharacterDebut
+import com.google.gson.GsonBuilder
 import kotlinx.coroutines.test.runTest
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class CharacterRepositoryImplTest {
 
+    private lateinit var mockWebServer: MockWebServer
+    private lateinit var narutoApiService: NarutoApiService
+
+    @Before
+    fun setUp() {
+        mockWebServer = MockWebServer()
+        mockWebServer.start()
+
+        narutoApiService = Retrofit.Builder()
+            .baseUrl(mockWebServer.url("/"))
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .build()
+            .create(NarutoApiService::class.java)
+    }
+
+    @After
+    fun tearDown() {
+        mockWebServer.shutdown()
+    }
+
     @Test
     fun `getCharacters returns mapped domain page`() = runTest {
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(charactersResponseJson),
+        )
         val repository = CharacterRepositoryImpl(
-            narutoApiService = FakeNarutoApiService(),
+            narutoApiService = narutoApiService,
             characterDao = FakeCharacterDao(),
         )
 
         val result = repository.getCharacters()
+        val request = mockWebServer.takeRequest()
 
+        assertEquals("/characters", request.path)
         assertEquals(1, result.currentPage)
         assertEquals(20, result.pageSize)
         assertEquals(1431, result.total)
@@ -35,19 +64,47 @@ class CharacterRepositoryImplTest {
 
     @Test
     fun `getCharacterDetails returns mapped domain details`() = runTest {
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(characterDetailResponseJson),
+        )
         val repository = CharacterRepositoryImpl(
-            narutoApiService = FakeNarutoApiService(),
+            narutoApiService = narutoApiService,
             characterDao = FakeCharacterDao(),
         )
 
         val result = repository.getCharacterDetails(id = 1344)
+        val request = mockWebServer.takeRequest()
 
+        assertEquals("/characters/1344", request.path)
         assertEquals(1344, result.id)
         assertEquals("Naruto Uzumaki", result.name)
         assertEquals("Minato Namikaze", result.family["father"])
         assertEquals(listOf("Jinchuriki"), result.personal.classification)
         assertEquals(mapOf("Part I" to "Genin"), result.rank.ninjaRank)
         assertEquals(false, result.isFavorite)
+    }
+
+    @Test
+    fun `saveFavorite caches remote detail when character is not local yet`() = runTest {
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(characterDetailResponseJson),
+        )
+        val characterDao = FakeCharacterDao()
+        val repository = CharacterRepositoryImpl(
+            narutoApiService = narutoApiService,
+            characterDao = characterDao,
+        )
+
+        val result = repository.saveFavorite(1344)
+        val request = mockWebServer.takeRequest()
+
+        assertEquals("/characters/1344", request.path)
+        assertEquals(true, result)
+        assertEquals(true, characterDao.getCharacterById(1344)?.isFavorite)
     }
 
     @Test
@@ -62,25 +119,11 @@ class CharacterRepositoryImplTest {
             ),
         )
         val repository = CharacterRepositoryImpl(
-            narutoApiService = FakeNarutoApiService(),
+            narutoApiService = narutoApiService,
             characterDao = characterDao,
         )
 
         val result = repository.toggleFavorite(1344)
-
-        assertEquals(true, result)
-        assertEquals(true, characterDao.getCharacterById(1344)?.isFavorite)
-    }
-
-    @Test
-    fun `saveFavorite caches remote detail when character is not local yet`() = runTest {
-        val characterDao = FakeCharacterDao()
-        val repository = CharacterRepositoryImpl(
-            narutoApiService = FakeNarutoApiService(),
-            characterDao = characterDao,
-        )
-
-        val result = repository.saveFavorite(1344)
 
         assertEquals(true, result)
         assertEquals(true, characterDao.getCharacterById(1344)?.isFavorite)
@@ -98,7 +141,7 @@ class CharacterRepositoryImplTest {
             ),
         )
         val repository = CharacterRepositoryImpl(
-            narutoApiService = FakeNarutoApiService(),
+            narutoApiService = narutoApiService,
             characterDao = characterDao,
         )
 
@@ -116,9 +159,7 @@ class CharacterRepositoryImplTest {
                     id = 1344,
                     name = "Naruto Uzumaki",
                     images = listOf("image-1"),
-                    debut = CharacterDebutDto(manga = "Naruto Chapter #1").let {
-                        com.example.dattebayoapp.domain.model.CharacterDebut(manga = it.manga)
-                    },
+                    debut = CharacterDebut(manga = "Naruto Chapter #1"),
                     isFavorite = true,
                 ),
                 1307 to CharacterEntity(
@@ -129,7 +170,7 @@ class CharacterRepositoryImplTest {
             ),
         )
         val repository = CharacterRepositoryImpl(
-            narutoApiService = FakeNarutoApiService(),
+            narutoApiService = narutoApiService,
             characterDao = characterDao,
         )
 
@@ -139,40 +180,6 @@ class CharacterRepositoryImplTest {
         assertEquals(1344, result.first().id)
         assertEquals(true, result.first().isFavorite)
         assertEquals("Naruto Chapter #1", result.first().debut?.manga)
-    }
-
-    private class FakeNarutoApiService : NarutoApiService {
-        override suspend fun getCharacters(): CharactersResponseDto {
-            return CharactersResponseDto(
-                characters = listOf(
-                    CharacterSummaryDto(
-                        id = 1344,
-                        name = "Naruto Uzumaki",
-                        images = listOf("image-1"),
-                        debut = CharacterDebutDto(manga = "Naruto Chapter #1"),
-                    ),
-                ),
-                currentPage = 1,
-                pageSize = 20,
-                total = 1431,
-            )
-        }
-
-        override suspend fun getCharacterDetails(id: Int): CharacterDetailsDto {
-            return CharacterDetailsDto(
-                id = id,
-                name = "Naruto Uzumaki",
-                images = listOf("image-1", "image-2"),
-                family = mapOf("father" to "Minato Namikaze"),
-                personal = CharacterPersonalDto(
-                    classification = com.google.gson.JsonParser.parseString("[\"Jinchuriki\"]"),
-                ),
-                rank = CharacterRankDto(
-                    ninjaRank = mapOf("Part I" to "Genin"),
-                    ninjaRegistration = "012607",
-                ),
-            )
-        }
     }
 
     private class FakeCharacterDao(
@@ -213,5 +220,51 @@ class CharacterRepositoryImplTest {
         override suspend fun clearCharacters() {
             characters.clear()
         }
+    }
+
+    private companion object {
+        const val charactersResponseJson = """
+            {
+              "characters": [
+                {
+                  "id": 1344,
+                  "name": "Naruto Uzumaki",
+                  "images": ["image-1"],
+                  "debut": {
+                    "manga": "Naruto Chapter #1",
+                    "anime": "Naruto Episode #1",
+                    "appearsIn": "Anime, Manga"
+                  }
+                }
+              ],
+              "currentPage": 1,
+              "pageSize": 20,
+              "total": 1431
+            }
+        """
+
+        const val characterDetailResponseJson = """
+            {
+              "id": 1344,
+              "name": "Naruto Uzumaki",
+              "images": ["image-1", "image-2"],
+              "family": {
+                "father": "Minato Namikaze"
+              },
+              "jutsu": ["Rasengan"],
+              "natureType": ["Wind Release"],
+              "personal": {
+                "classification": ["Jinchuriki"]
+              },
+              "rank": {
+                "ninjaRank": {
+                  "Part I": "Genin"
+                },
+                "ninjaRegistration": "012607"
+              },
+              "tools": ["Kunai"],
+              "uniqueTraits": []
+            }
+        """
     }
 }
