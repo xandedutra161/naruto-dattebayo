@@ -10,7 +10,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -76,10 +75,6 @@ fun DattebayoNavigation(
                 val viewModel: CharacterViewModel = hiltViewModel()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-                LaunchedEffect(Unit) {
-                    viewModel.loadCharacters()
-                }
-
                 CharacterListScreen(
                     characters = uiState.characters,
                     isLoading = uiState.isLoading,
@@ -96,10 +91,6 @@ fun DattebayoNavigation(
             composable(AppDestination.Favorites.route) {
                 val viewModel: FavoriteCharactersViewModel = hiltViewModel()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-                LaunchedEffect(Unit) {
-                    viewModel.loadFavorites()
-                }
 
                 FavoriteCharactersScreen(
                     uiState = uiState,

@@ -216,10 +216,6 @@ class CharacterRepositoryImplTest {
         override suspend fun upsertCharacter(character: CharacterEntity) {
             characters[character.id] = character
         }
-
-        override suspend fun clearCharacters() {
-            characters.clear()
-        }
     }
 
     private companion object {

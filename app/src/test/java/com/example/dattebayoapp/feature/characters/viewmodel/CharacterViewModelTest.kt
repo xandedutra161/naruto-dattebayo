@@ -109,23 +109,6 @@ class CharacterViewModelTest {
         assertEquals(1344, repository.lastRemovedFavoriteId)
     }
 
-    @Test
-    fun `clearError removes current error message`() = runTest {
-        val repository = FakeCharacterRepository(
-            getCharactersError = IllegalStateException("Network unavailable"),
-        )
-        val viewModel = CharacterViewModel(
-            getCharactersUseCase = GetCharactersUseCase(repository),
-            saveFavoriteUseCase = SaveFavoriteUseCase(repository),
-            removeFavoriteUseCase = RemoveFavoriteUseCase(repository),
-        )
-
-        testDispatcher.scheduler.advanceUntilIdle()
-        viewModel.clearError()
-
-        assertNull(viewModel.uiState.value.errorMessage)
-    }
-
     private class FakeCharacterRepository(
         private val getCharactersError: Throwable? = null,
         initialFavorites: MutableMap<Int, Boolean> = mutableMapOf(),

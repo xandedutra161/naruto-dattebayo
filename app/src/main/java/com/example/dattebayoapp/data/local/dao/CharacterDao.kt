@@ -27,7 +27,4 @@ interface CharacterDao {
 
     @Upsert
     suspend fun upsertCharacter(character: CharacterEntity)
-
-    @Query("DELETE FROM characters")
-    suspend fun clearCharacters()
 }

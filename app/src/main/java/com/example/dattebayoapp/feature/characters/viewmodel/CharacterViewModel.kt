@@ -94,8 +94,4 @@ class CharacterViewModel @Inject constructor(
                 }
         }
     }
-
-    fun clearError() {
-        _uiState.update { state -> state.copy(errorMessage = null) }
-    }
 }
