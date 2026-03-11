@@ -5,6 +5,7 @@ data class CharacterDetails(
     val name: String,
     val images: List<String> = emptyList(),
     val debut: CharacterDebut = CharacterDebut(),
+    val isFavorite: Boolean = false,
     val family: Map<String, String> = emptyMap(),
     val jutsu: List<String> = emptyList(),
     val natureType: List<String> = emptyList(),

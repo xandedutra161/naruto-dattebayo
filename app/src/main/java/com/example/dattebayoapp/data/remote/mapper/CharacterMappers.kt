@@ -32,6 +32,7 @@ fun CharacterSummaryDto.toDomain(): CharacterListItem {
         name = name,
         images = images,
         debut = debut?.toDomain(),
+        isFavorite = false,
     )
 }
 
@@ -41,6 +42,7 @@ fun CharacterDetailsDto.toDomain(): CharacterDetails {
         name = name,
         images = images,
         debut = debut?.toDomain() ?: CharacterDebut(),
+        isFavorite = false,
         family = family.orEmpty(),
         jutsu = jutsu,
         natureType = natureType,

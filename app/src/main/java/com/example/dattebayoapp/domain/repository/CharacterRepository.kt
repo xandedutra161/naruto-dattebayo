@@ -7,4 +7,6 @@ interface CharacterRepository {
     suspend fun getCharacters(): CharacterPage
 
     suspend fun getCharacterDetails(id: Int): CharacterDetails
+
+    suspend fun toggleFavorite(id: Int): Boolean
 }

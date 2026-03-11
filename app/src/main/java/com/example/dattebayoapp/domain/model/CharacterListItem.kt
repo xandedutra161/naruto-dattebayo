@@ -5,4 +5,5 @@ data class CharacterListItem(
     val name: String,
     val images: List<String> = emptyList(),
     val debut: CharacterDebut? = null,
+    val isFavorite: Boolean = false,
 )
