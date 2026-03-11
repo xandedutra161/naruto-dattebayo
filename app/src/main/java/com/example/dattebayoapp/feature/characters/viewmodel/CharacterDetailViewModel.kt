@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dattebayoapp.domain.usecase.GetCharacterDetailUseCase
+import com.example.dattebayoapp.domain.usecase.ObserveFavoriteStatusUseCase
 import com.example.dattebayoapp.domain.usecase.ToggleFavoriteUseCase
 import com.example.dattebayoapp.feature.characters.state.CharacterDetailUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +19,7 @@ import javax.inject.Inject
 class CharacterDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getCharacterDetailUseCase: GetCharacterDetailUseCase,
+    private val observeFavoriteStatusUseCase: ObserveFavoriteStatusUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
 ) : ViewModel() {
 
@@ -25,9 +27,24 @@ class CharacterDetailViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(CharacterDetailUiState(isLoading = true))
     val uiState: StateFlow<CharacterDetailUiState> = _uiState.asStateFlow()
+    private val favoriteStatus = MutableStateFlow<Boolean?>(null)
 
     init {
+        observeFavoriteStatus()
         loadCharacter()
+    }
+
+    private fun observeFavoriteStatus() {
+        viewModelScope.launch {
+            observeFavoriteStatusUseCase(characterId).collect { isFavorite ->
+                favoriteStatus.value = isFavorite
+                _uiState.update { state ->
+                    state.copy(
+                        character = state.character?.copy(isFavorite = isFavorite),
+                    )
+                }
+            }
+        }
     }
 
     fun loadCharacter() {
@@ -37,7 +54,9 @@ class CharacterDetailViewModel @Inject constructor(
             runCatching { getCharacterDetailUseCase(characterId) }
                 .onSuccess { character ->
                     _uiState.value = CharacterDetailUiState(
-                        character = character,
+                        character = character.copy(
+                            isFavorite = favoriteStatus.value ?: character.isFavorite,
+                        ),
                         isLoading = false,
                         errorMessage = null,
                     )
@@ -56,10 +75,9 @@ class CharacterDetailViewModel @Inject constructor(
     fun toggleFavorite() {
         viewModelScope.launch {
             runCatching { toggleFavoriteUseCase(characterId) }
-                .onSuccess { isFavorite ->
+                .onSuccess {
                     _uiState.update { state ->
                         state.copy(
-                            character = state.character?.copy(isFavorite = isFavorite),
                             errorMessage = null,
                         )
                     }

@@ -5,6 +5,10 @@ import com.example.dattebayoapp.data.local.entity.CharacterEntity
 import com.example.dattebayoapp.data.remote.service.NarutoApiService
 import com.example.dattebayoapp.domain.model.CharacterDebut
 import com.google.gson.GsonBuilder
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -182,10 +186,46 @@ class CharacterRepositoryImplTest {
         assertEquals("Naruto Chapter #1", result.first().debut?.manga)
     }
 
+    @Test
+    fun `observeFavoriteCharacterIds exposes current favorite ids`() = runTest {
+        val repository = CharacterRepositoryImpl(
+            narutoApiService = narutoApiService,
+            characterDao = FakeCharacterDao(
+                initialCharacters = mutableMapOf(
+                    1344 to CharacterEntity(id = 1344, name = "Naruto Uzumaki", isFavorite = true),
+                    1307 to CharacterEntity(id = 1307, name = "Sasuke Uchiha", isFavorite = false),
+                ),
+            ),
+        )
+
+        val result = repository.observeFavoriteCharacterIds().first()
+
+        assertEquals(setOf(1344), result)
+    }
+
+    @Test
+    fun `observeFavoriteStatus reflects dao updates`() = runTest {
+        val characterDao = FakeCharacterDao(
+            initialCharacters = mutableMapOf(
+                1344 to CharacterEntity(id = 1344, name = "Naruto Uzumaki", isFavorite = false),
+            ),
+        )
+        val repository = CharacterRepositoryImpl(
+            narutoApiService = narutoApiService,
+            characterDao = characterDao,
+        )
+
+        characterDao.updateFavorite(1344, true)
+        val result = repository.observeFavoriteStatus(1344).first()
+
+        assertTrue(result)
+    }
+
     private class FakeCharacterDao(
         initialCharacters: MutableMap<Int, CharacterEntity> = mutableMapOf(),
     ) : CharacterDao {
         private val characters = initialCharacters
+        private val charactersFlow = MutableStateFlow(characters.toMap())
 
         override suspend fun getCharacters(): List<CharacterEntity> {
             return characters.values.sortedBy { it.id }
@@ -199,22 +239,41 @@ class CharacterRepositoryImplTest {
             return characters.values.filter { it.isFavorite }.sortedBy { it.name }
         }
 
+        override fun observeFavoriteCharacters(): Flow<List<CharacterEntity>> {
+            return charactersFlow.map { allCharacters ->
+                allCharacters.values.filter { it.isFavorite }.sortedBy { it.name }
+            }
+        }
+
         override suspend fun getFavoriteCharacterIds(): List<Int> {
             return characters.values.filter { it.isFavorite }.map { it.id }
+        }
+
+        override fun observeFavoriteCharacterIds(): Flow<List<Int>> {
+            return charactersFlow.map { allCharacters ->
+                allCharacters.values.filter { it.isFavorite }.map { it.id }
+            }
+        }
+
+        override fun observeFavoriteStatus(id: Int): Flow<Boolean?> {
+            return charactersFlow.map { allCharacters -> allCharacters[id]?.isFavorite }
         }
 
         override suspend fun updateFavorite(id: Int, isFavorite: Boolean): Int {
             val character = characters[id] ?: return 0
             characters[id] = character.copy(isFavorite = isFavorite)
+            charactersFlow.value = characters.toMap()
             return 1
         }
 
         override suspend fun upsertCharacters(characters: List<CharacterEntity>) {
             characters.forEach { character -> this.characters[character.id] = character }
+            charactersFlow.value = this.characters.toMap()
         }
 
         override suspend fun upsertCharacter(character: CharacterEntity) {
             characters[character.id] = character
+            charactersFlow.value = characters.toMap()
         }
     }
 

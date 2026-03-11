@@ -2,10 +2,11 @@ package com.example.dattebayoapp.feature.characters.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.dattebayoapp.domain.usecase.GetFavoriteCharactersUseCase
+import com.example.dattebayoapp.domain.usecase.ObserveFavoriteCharactersUseCase
 import com.example.dattebayoapp.domain.usecase.RemoveFavoriteUseCase
 import com.example.dattebayoapp.feature.characters.state.FavoriteCharactersUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,25 +16,31 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FavoriteCharactersViewModel @Inject constructor(
-    private val getFavoriteCharactersUseCase: GetFavoriteCharactersUseCase,
+    private val observeFavoriteCharactersUseCase: ObserveFavoriteCharactersUseCase,
     private val removeFavoriteUseCase: RemoveFavoriteUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FavoriteCharactersUiState(isLoading = true))
     val uiState: StateFlow<FavoriteCharactersUiState> = _uiState.asStateFlow()
+    private var observeFavoritesJob: Job? = null
 
     init {
         loadFavorites()
     }
 
     fun loadFavorites() {
-        viewModelScope.launch {
+        if (observeFavoritesJob != null) {
+            _uiState.update { state -> state.copy(errorMessage = null) }
+            return
+        }
+
+        observeFavoritesJob = viewModelScope.launch {
             _uiState.update { state ->
                 state.copy(isLoading = true, errorMessage = null)
             }
 
-            runCatching { getFavoriteCharactersUseCase() }
-                .onSuccess { favorites ->
+            runCatching {
+                observeFavoriteCharactersUseCase().collect { favorites ->
                     _uiState.update { state ->
                         state.copy(
                             favorites = favorites,
@@ -42,14 +49,14 @@ class FavoriteCharactersViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { throwable ->
-                    _uiState.update { state ->
-                        state.copy(
-                            isLoading = false,
-                            errorMessage = "Não foi possível carregar os favoritos.",
-                        )
-                    }
+            }.onFailure { throwable ->
+                _uiState.update { state ->
+                    state.copy(
+                        isLoading = false,
+                        errorMessage = "Não foi possível carregar os favoritos.",
+                    )
                 }
+            }
         }
     }
 
@@ -63,7 +70,6 @@ class FavoriteCharactersViewModel @Inject constructor(
                 .onSuccess {
                     _uiState.update { state ->
                         state.copy(
-                            favorites = state.favorites.filterNot { it.id == characterId },
                             errorMessage = null,
                         )
                     }

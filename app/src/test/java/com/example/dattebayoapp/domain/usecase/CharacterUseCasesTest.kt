@@ -5,6 +5,10 @@ import com.example.dattebayoapp.domain.model.CharacterDetails
 import com.example.dattebayoapp.domain.model.CharacterListItem
 import com.example.dattebayoapp.domain.model.CharacterPage
 import com.example.dattebayoapp.domain.repository.CharacterRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -41,6 +45,33 @@ class CharacterUseCasesTest {
     }
 
     @Test
+    fun `ObserveFavoriteCharactersUseCase delegates to repository`() = runTest {
+        val repository = FakeCharacterRepository()
+
+        val result = ObserveFavoriteCharactersUseCase(repository).invoke().first()
+
+        assertEquals(repository.favoriteCharacters, result)
+    }
+
+    @Test
+    fun `ObserveFavoriteCharacterIdsUseCase delegates to repository`() = runTest {
+        val repository = FakeCharacterRepository()
+
+        val result = ObserveFavoriteCharacterIdsUseCase(repository).invoke().first()
+
+        assertEquals(setOf(1344), result)
+    }
+
+    @Test
+    fun `ObserveFavoriteStatusUseCase delegates to repository`() = runTest {
+        val repository = FakeCharacterRepository()
+
+        val result = ObserveFavoriteStatusUseCase(repository).invoke(1344).first()
+
+        assertTrue(result)
+    }
+
+    @Test
     fun `SaveFavoriteUseCase delegates to repository`() = runTest {
         val repository = FakeCharacterRepository()
 
@@ -71,6 +102,7 @@ class CharacterUseCasesTest {
     }
 
     private class FakeCharacterRepository : CharacterRepository {
+        private val favoriteIdsFlow = MutableStateFlow(setOf(1344))
         val page = CharacterPage(
             items = listOf(
                 CharacterListItem(
@@ -119,6 +151,18 @@ class CharacterUseCasesTest {
         }
 
         override suspend fun getFavoriteCharacters(): List<CharacterListItem> = favoriteCharacters
+
+        override fun observeFavoriteCharacters(): Flow<List<CharacterListItem>> {
+            return favoriteIdsFlow.map { favoriteIds ->
+                favoriteCharacters.filter { character -> character.id in favoriteIds }
+            }
+        }
+
+        override fun observeFavoriteCharacterIds(): Flow<Set<Int>> = favoriteIdsFlow
+
+        override fun observeFavoriteStatus(id: Int): Flow<Boolean> {
+            return favoriteIdsFlow.map { favoriteIds -> id in favoriteIds }
+        }
 
         override suspend fun saveFavorite(id: Int): Boolean {
             lastSavedFavoriteId = id

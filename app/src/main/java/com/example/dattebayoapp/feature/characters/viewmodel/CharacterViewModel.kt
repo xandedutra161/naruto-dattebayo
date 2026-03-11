@@ -2,7 +2,9 @@ package com.example.dattebayoapp.feature.characters.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.dattebayoapp.domain.model.CharacterListItem
 import com.example.dattebayoapp.domain.usecase.GetCharactersUseCase
+import com.example.dattebayoapp.domain.usecase.ObserveFavoriteCharacterIdsUseCase
 import com.example.dattebayoapp.domain.usecase.RemoveFavoriteUseCase
 import com.example.dattebayoapp.domain.usecase.SaveFavoriteUseCase
 import com.example.dattebayoapp.feature.characters.state.CharacterUiState
@@ -17,15 +19,32 @@ import javax.inject.Inject
 @HiltViewModel
 class CharacterViewModel @Inject constructor(
     private val getCharactersUseCase: GetCharactersUseCase,
+    private val observeFavoriteCharacterIdsUseCase: ObserveFavoriteCharacterIdsUseCase,
     private val saveFavoriteUseCase: SaveFavoriteUseCase,
     private val removeFavoriteUseCase: RemoveFavoriteUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CharacterUiState(isLoading = true))
     val uiState: StateFlow<CharacterUiState> = _uiState.asStateFlow()
+    private val loadedCharacters = MutableStateFlow<List<CharacterListItem>>(emptyList())
 
     init {
+        observeFavorites()
         loadCharacters()
+    }
+
+    private fun observeFavorites() {
+        viewModelScope.launch {
+            observeFavoriteCharacterIdsUseCase().collect { favoriteIds ->
+                _uiState.update { state ->
+                    state.copy(
+                        characters = loadedCharacters.value.map { character ->
+                            character.copy(isFavorite = character.id in favoriteIds)
+                        },
+                    )
+                }
+            }
+        }
     }
 
     fun loadCharacters() {
@@ -39,11 +58,19 @@ class CharacterViewModel @Inject constructor(
 
             runCatching { getCharactersUseCase() }
                 .onSuccess { page ->
-                    _uiState.value = CharacterUiState(
-                        characters = page.items,
-                        isLoading = false,
-                        errorMessage = null,
-                    )
+                    loadedCharacters.value = page.items
+                    _uiState.update { state ->
+                        state.copy(
+                            characters = page.items.map { character ->
+                                character.copy(
+                                    isFavorite = state.characters.firstOrNull { it.id == character.id }?.isFavorite
+                                        ?: character.isFavorite,
+                                )
+                            },
+                            isLoading = false,
+                            errorMessage = null,
+                        )
+                    }
                 }
                 .onFailure { throwable ->
                     _uiState.update { state ->
@@ -51,14 +78,14 @@ class CharacterViewModel @Inject constructor(
                             isLoading = false,
                             errorMessage = "Não foi possível carregar os personagens.",
                         )
-                    }
                 }
+            }
         }
     }
 
     fun toggleFavorite(characterId: Int) {
         viewModelScope.launch {
-            val isCurrentlyFavorite = _uiState.value.characters
+            val isCurrentlyFavorite = uiState.value.characters
                 .firstOrNull { character -> character.id == characterId }
                 ?.isFavorite
                 ?: return@launch
@@ -74,13 +101,6 @@ class CharacterViewModel @Inject constructor(
                 .onSuccess { isFavorite ->
                     _uiState.update { state ->
                         state.copy(
-                            characters = state.characters.map { character ->
-                                if (character.id == characterId) {
-                                    character.copy(isFavorite = isFavorite)
-                                } else {
-                                    character
-                                }
-                            },
                             errorMessage = null,
                         )
                     }

@@ -5,10 +5,14 @@ import com.example.dattebayoapp.domain.model.CharacterListItem
 import com.example.dattebayoapp.domain.model.CharacterPage
 import com.example.dattebayoapp.domain.repository.CharacterRepository
 import com.example.dattebayoapp.domain.usecase.GetCharactersUseCase
+import com.example.dattebayoapp.domain.usecase.ObserveFavoriteCharacterIdsUseCase
 import com.example.dattebayoapp.domain.usecase.RemoveFavoriteUseCase
 import com.example.dattebayoapp.domain.usecase.SaveFavoriteUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -41,6 +45,7 @@ class CharacterViewModelTest {
         val repository = FakeCharacterRepository()
         val viewModel = CharacterViewModel(
             getCharactersUseCase = GetCharactersUseCase(repository),
+            observeFavoriteCharacterIdsUseCase = ObserveFavoriteCharacterIdsUseCase(repository),
             saveFavoriteUseCase = SaveFavoriteUseCase(repository),
             removeFavoriteUseCase = RemoveFavoriteUseCase(repository),
         )
@@ -61,6 +66,7 @@ class CharacterViewModelTest {
         )
         val viewModel = CharacterViewModel(
             getCharactersUseCase = GetCharactersUseCase(repository),
+            observeFavoriteCharacterIdsUseCase = ObserveFavoriteCharacterIdsUseCase(repository),
             saveFavoriteUseCase = SaveFavoriteUseCase(repository),
             removeFavoriteUseCase = RemoveFavoriteUseCase(repository),
         )
@@ -78,6 +84,7 @@ class CharacterViewModelTest {
         val repository = FakeCharacterRepository()
         val viewModel = CharacterViewModel(
             getCharactersUseCase = GetCharactersUseCase(repository),
+            observeFavoriteCharacterIdsUseCase = ObserveFavoriteCharacterIdsUseCase(repository),
             saveFavoriteUseCase = SaveFavoriteUseCase(repository),
             removeFavoriteUseCase = RemoveFavoriteUseCase(repository),
         )
@@ -96,6 +103,7 @@ class CharacterViewModelTest {
         val repository = FakeCharacterRepository(initialFavorites = mutableMapOf(1344 to true))
         val viewModel = CharacterViewModel(
             getCharactersUseCase = GetCharactersUseCase(repository),
+            observeFavoriteCharacterIdsUseCase = ObserveFavoriteCharacterIdsUseCase(repository),
             saveFavoriteUseCase = SaveFavoriteUseCase(repository),
             removeFavoriteUseCase = RemoveFavoriteUseCase(repository),
         )
@@ -109,11 +117,33 @@ class CharacterViewModelTest {
         assertEquals(1344, repository.lastRemovedFavoriteId)
     }
 
+    @Test
+    fun `favorite flow updates loaded characters without reloading list`() = runTest {
+        val repository = FakeCharacterRepository()
+        val viewModel = CharacterViewModel(
+            getCharactersUseCase = GetCharactersUseCase(repository),
+            observeFavoriteCharacterIdsUseCase = ObserveFavoriteCharacterIdsUseCase(repository),
+            saveFavoriteUseCase = SaveFavoriteUseCase(repository),
+            removeFavoriteUseCase = RemoveFavoriteUseCase(repository),
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+        repository.emitFavorite(1307, true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.characters.first { it.id == 1307 }.isFavorite)
+        assertFalse(state.characters.first { it.id == 1344 }.isFavorite)
+    }
+
     private class FakeCharacterRepository(
         private val getCharactersError: Throwable? = null,
         initialFavorites: MutableMap<Int, Boolean> = mutableMapOf(),
     ) : CharacterRepository {
         private val favorites = initialFavorites
+        private val favoriteIdsFlow = MutableStateFlow(
+            favorites.filterValues { it }.keys.toSet(),
+        )
         private val characters = listOf(
             CharacterListItem(
                 id = 1344,
@@ -152,9 +182,24 @@ class CharacterViewModelTest {
                 .map { character -> character.copy(isFavorite = true) }
         }
 
+        override fun observeFavoriteCharacters(): Flow<List<CharacterListItem>> {
+            return favoriteIdsFlow.map { favoriteIds ->
+                characters
+                    .filter { character -> character.id in favoriteIds }
+                    .map { character -> character.copy(isFavorite = true) }
+            }
+        }
+
+        override fun observeFavoriteCharacterIds(): Flow<Set<Int>> = favoriteIdsFlow
+
+        override fun observeFavoriteStatus(id: Int): Flow<Boolean> {
+            return favoriteIdsFlow.map { favoriteIds -> id in favoriteIds }
+        }
+
         override suspend fun saveFavorite(id: Int): Boolean {
             lastSavedFavoriteId = id
             favorites[id] = true
+            favoriteIdsFlow.value = favorites.filterValues { it }.keys.toSet()
             return true
         }
 
@@ -162,13 +207,20 @@ class CharacterViewModelTest {
             lastRemovedFavoriteId = id
             val wasFavorite = favorites[id] == true
             favorites[id] = false
+            favoriteIdsFlow.value = favorites.filterValues { it }.keys.toSet()
             return wasFavorite
         }
 
         override suspend fun toggleFavorite(id: Int): Boolean {
             val newState = !(favorites[id] ?: false)
             favorites[id] = newState
+            favoriteIdsFlow.value = favorites.filterValues { it }.keys.toSet()
             return newState
+        }
+
+        fun emitFavorite(id: Int, isFavorite: Boolean) {
+            favorites[id] = isFavorite
+            favoriteIdsFlow.value = favorites.filterValues { it }.keys.toSet()
         }
     }
 }

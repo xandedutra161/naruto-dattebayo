@@ -10,6 +10,8 @@ import com.example.dattebayoapp.domain.model.CharacterListItem
 import com.example.dattebayoapp.domain.model.CharacterPage
 import com.example.dattebayoapp.domain.repository.CharacterRepository
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class CharacterRepositoryImpl @Inject constructor(
     private val narutoApiService: NarutoApiService,
@@ -44,6 +46,21 @@ class CharacterRepositoryImpl @Inject constructor(
 
     override suspend fun getFavoriteCharacters(): List<CharacterListItem> {
         return characterDao.getFavoriteCharacters().map { entity -> entity.toListItem() }
+    }
+
+    override fun observeFavoriteCharacters(): Flow<List<CharacterListItem>> {
+        return characterDao.observeFavoriteCharacters()
+            .map { characters -> characters.map { entity -> entity.toListItem() } }
+    }
+
+    override fun observeFavoriteCharacterIds(): Flow<Set<Int>> {
+        return characterDao.observeFavoriteCharacterIds()
+            .map { favoriteIds -> favoriteIds.toSet() }
+    }
+
+    override fun observeFavoriteStatus(id: Int): Flow<Boolean> {
+        return characterDao.observeFavoriteStatus(id)
+            .map { isFavorite -> isFavorite ?: false }
     }
 
     override suspend fun saveFavorite(id: Int): Boolean {

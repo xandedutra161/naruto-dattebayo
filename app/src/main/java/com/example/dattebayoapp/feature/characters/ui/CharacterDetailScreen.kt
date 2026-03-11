@@ -119,7 +119,7 @@ fun CharacterDetailScreen(
                 item {
                     CharacterHeroCard(
                         character = character,
-                        onFavoriteClick = { onFavoriteClick(character.id) },
+                        onFavoriteClick = onFavoriteClick,
                     )
                 }
 
@@ -226,7 +226,7 @@ fun CharacterDetailScreen(
 @Composable
 private fun CharacterHeroCard(
     character: CharacterDetails,
-    onFavoriteClick: () -> Unit,
+    onFavoriteClick: (Int) -> Unit,
 ) {
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(
@@ -290,7 +290,7 @@ private fun CharacterHeroCard(
 
                     FilterChip(
                         selected = character.isFavorite,
-                        onClick = onFavoriteClick,
+                        onClick = { onFavoriteClick(character.id) },
                         label = {
                             Text(
                                 if (character.isFavorite) {
