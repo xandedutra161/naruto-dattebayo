@@ -337,7 +337,7 @@ private fun CharacterImage(
     )
 }
 
-private fun CharacterDebut?.toDebutLabel(): String {
+internal fun CharacterDebut?.toDebutLabel(): String {
     if (this == null) return "No debut information available."
 
     return listOfNotNull(

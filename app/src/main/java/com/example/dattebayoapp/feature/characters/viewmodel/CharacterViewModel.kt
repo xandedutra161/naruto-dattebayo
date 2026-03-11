@@ -3,7 +3,8 @@ package com.example.dattebayoapp.feature.characters.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dattebayoapp.domain.usecase.GetCharactersUseCase
-import com.example.dattebayoapp.domain.usecase.ToggleFavoriteUseCase
+import com.example.dattebayoapp.domain.usecase.RemoveFavoriteUseCase
+import com.example.dattebayoapp.domain.usecase.SaveFavoriteUseCase
 import com.example.dattebayoapp.feature.characters.state.CharacterUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -16,7 +17,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class CharacterViewModel @Inject constructor(
     private val getCharactersUseCase: GetCharactersUseCase,
-    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val saveFavoriteUseCase: SaveFavoriteUseCase,
+    private val removeFavoriteUseCase: RemoveFavoriteUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CharacterUiState(isLoading = true))
@@ -56,7 +58,19 @@ class CharacterViewModel @Inject constructor(
 
     fun toggleFavorite(characterId: Int) {
         viewModelScope.launch {
-            runCatching { toggleFavoriteUseCase(characterId) }
+            val isCurrentlyFavorite = _uiState.value.characters
+                .firstOrNull { character -> character.id == characterId }
+                ?.isFavorite
+                ?: return@launch
+
+            runCatching {
+                if (isCurrentlyFavorite) {
+                    removeFavoriteUseCase(characterId)
+                    false
+                } else {
+                    saveFavoriteUseCase(characterId)
+                }
+            }
                 .onSuccess { isFavorite ->
                     _uiState.update { state ->
                         state.copy(

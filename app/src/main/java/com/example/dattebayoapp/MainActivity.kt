@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.example.dattebayoapp.navigation.DattebayoNavigation
 import com.example.dattebayoapp.ui.theme.DattebayoAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -14,7 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DattebayoAppTheme {
-
+                DattebayoNavigation()
             }
         }
     }
